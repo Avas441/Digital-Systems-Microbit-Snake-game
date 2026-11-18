@@ -1,22 +1,22 @@
 #include "MicroBit.h"
 
-MicroBit uBit;            // The MicroBit object
 
-int length = 4; // The maximum length of the snake
+
+MicroBit uBit; // The MicroBit object
+
+const int MAX_LENGTH = 4; // Sets the starting length of the snake
 int sleep_period = 400;   // The initial sleep time
-
+int sleep_reduction = 25;
+int sleep_max = 300;
+int length = 1;
 // Create a structure for the coordinates of each pixel of the snake
 struct pixel
 {
     int x, y;
 };
 
-// Create a snake (array) that consists of length + 1 pixels.
-// The actual (visible) length of the snake is length,
-// i.e., from [0] to [length-1]. The last position
-// (i.e., [length]) holds the previous position of the tail,
-// which is erased when the snake moves.
-struct pixel snake[25]; 
+
+struct pixel snake[MAX_LENGTH + 1]; // Create a snake (array) that consists of MAX_LENGTH + 1 empty elemnets
 
 // Initialise the coordinates of each pixel of the snake,
 // so that the head of the snake is in position (new_head.x, new_head.y)
@@ -60,7 +60,13 @@ void display_snake()
         uBit.display.image.setPixelValue(snake[length].x, snake[length].y, 0);
 }
 
-int direction;
+int direction; //Global variable that is used to store what current direction the snake is heading to
+
+
+//direction 0 = Snake is moving right
+//direction 1 = Snake is moving to the bottom
+//direction 2 = Snake is moving left
+//direction 3 = Snake is moving to the top
 
 void onButtonA(MicroBitEvent e)
 {
@@ -104,7 +110,6 @@ struct pixel apple;
 
 int score = 0;
 
-
 int main()
 {   
     // Initialise the coordinates of the snake head
@@ -117,25 +122,41 @@ int main()
     // Reveal the head of the snake at the top-left corner of the 5x5 display
     initialize_snake(snake_head);
 
-    direction = 0;
+    direction = 0; //Sets the inital direction of the snake after being printed onto display
 
     while (1)
     {
 
-        if(appleActive == 0)
-        {
-            struct pixel apple = {0,0};
-            uBit.display.image.setPixelValue(apple.x, apple.y, 255);
-            appleActive = 1;
+        if(appleActive == 0) // Used to check if there is currently an apple on the LED board
+        { // Creates a apple out of the struct "pixel" and sets its cordinates to 0,0 "top left"
+
+            apple.x = microbit_random(5);
+
+
+            apple.y = microbit_random(5);
+
+            uBit.display.image.setPixelValue(apple.x, apple.y, 255); //Uses the apples x and y cordinates and prints a pixel there on the display
+            appleActive = 1; // Updates flag so only one apple spawns
 
         }
 
-        if(snake_head.x == apple.x && snake_head.y == apple.y)
+        if(snake_head.x == apple.x && snake_head.y == apple.y) //Checks if the current location of snake_head is matching to the above created apple x and y and if true means it "ate" an apple
         {
-            uBit.display.image.setPixelValue(apple.x, apple.y, 0);
-            score++;
-            appleActive = 0;
-            uBit.display.scroll(score);
+            uBit.display.image.setPixelValue(apple.x, apple.y, 0);//Removes the pixel at apples x and y cordinates and updates the screen
+            score++; //Incremenets the score variable
+            length++; //Increments the length of the snake by 1
+            appleActive = 0; //Resets the flag so once the while loop is done a new apple is spawned
+            uBit.display.scroll(score); //DEBUG used to sh w the score after eating an apple
+
+            while(sleep_period >= sleep_max)
+            {
+                sleep_period = sleep_period - sleep_reduction;
+            }
+            if(length == 5)
+            {
+                uBit.display.scroll("You Win!");
+                uBit.sleep(10000000000);
+            }
         }
         // Print the snake
         display_snake();
