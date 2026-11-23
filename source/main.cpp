@@ -6,7 +6,10 @@ MicroBit uBit; // The MicroBit object
 
 struct pixel// Create a structure for the coordinates of each pixel of the snake
 {
-    int x, y;
+    int x;
+    int y;
+    int pos;
+
 };
 
 //The following are all global variable declared outside main so that all functions within the file can access them without passing pointers or referneces
@@ -32,14 +35,16 @@ int direction; // Stores the direction the snake is heading towards with numbers
 
 int gameLoop = 1; //Used to set whether the game should contiune to loop
 
-struct pixel snake[MAX_LENGTH + 1]; // Create a snake (array) that consists of MAX_LENGTH + 1 elements
+bool button_pressed = false;
+
+struct pixel snake[MAX_LENGTH]; // Create a snake (array) that consists of MAX_LENGTH + 1 elements
 
 
 //The below functions and implementation are taken from the week 7 lab exercise and is allowed under the guidance in the documentation
 
 // Initialise the coordinates of each pixel of the snake,
 // so that the head of the snake is in position (new_head.x, new_head.y)
-// and the remaining co-ordinates are set to -1.
+// and the remaining co-ordinates are set to +1.
 void initialize_snake(struct pixel new_head)
 {
     int i;
@@ -47,8 +52,8 @@ void initialize_snake(struct pixel new_head)
 
     for (i = 1; i < length + 1; i++)
     {
-        snake[i].x = -1;
-        snake[i].y = -1;
+        snake[i].x -1;
+        snake[i].y -1;
     }
 }
 
@@ -84,6 +89,8 @@ void display_snake()
 
 void onButtonA(MicroBitEvent e) //Custom event handler that is trigered when the player presses the button "A" and is used to move the snake left relative to its current direction
 {
+    button_pressed = true;
+
     if(direction == 0)
     {
         direction = 3;
@@ -97,11 +104,14 @@ void onButtonA(MicroBitEvent e) //Custom event handler that is trigered when the
     {
         direction = 0;
     }
+
 
 }
 
 void onButtonB(MicroBitEvent e) //Custom event handler that is trigered when the player presses the button "B" and is used to move the snake left relative to its current direction
 {
+    button_pressed = true;
+
     if(direction == 0)
     {
         direction = 1;
@@ -115,6 +125,7 @@ void onButtonB(MicroBitEvent e) //Custom event handler that is trigered when the
     {
         direction = 0;
     }
+
 
 }
 
@@ -128,18 +139,22 @@ int main()
     uBit.init();// Initialise the micro:bit
     
     uBit.display.setDisplayMode(DISPLAY_MODE_GREYSCALE); // Set display mode to greyscale
-    
+
     initialize_snake(snake_head); //Draws the snake at the starting cordinates
 
     direction = 0; //Sets the inital direction of the snake to move right 
+
+    uBit.audio.setVolume(255);
 
     while (gameLoop == 1) //Establishes the main game loop
     {
 
         if(appleActive == 0) // Used to check if there is currently an apple on the LED board
         {
-
             //Uses the microbit function "microbit_random" to set a random x and y value between 0 and 5 for the apple
+
+
+
             apple.x = microbit_random(4); 
             apple.y = microbit_random(4);
 
@@ -150,7 +165,7 @@ int main()
         if(snake_head.x == apple.x && snake_head.y == apple.y) //Checks if the current location of snake_head is matching to the above created apple x and y and if true means it "ate" an apple
         {
             uBit.display.image.setPixelValue(apple.x, apple.y, 0);//Removes the pixel at apples x and y cordinates and updates the screen
-            
+            uBit.audio.soundExpressions.play("giggle");
             score++; //Incremenets the score variable
             length++; //Increments the length of the snake by 1
             appleActive = 0; //Resets the flag so once the while loop is done a new apple is spawned
@@ -161,7 +176,7 @@ int main()
             {
                 sleep_period = sleep_period - sleep_reduction;
             }
-            if(length == 5)
+            if(length == 4)
             {
                 uBit.display.scroll("You Win!"); //Displays a message to the user
                 gameLoop = 0; //Stops the game loop
@@ -169,14 +184,29 @@ int main()
             }
         }
         
+        if(snake_head.x == -1 or snake_head.x == 5 or snake_head.y == -1 or snake_head.y == 5)
+        {
+            uBit.audio.soundExpressions.play("sad");
+            uBit.display.scroll("Game Over :(");
+            gameLoop = 0;
+        }
         display_snake();// Print the snake
         
         uBit.sleep(sleep_period);// Wait for starting sleep_period value of 400 ms
 
         //Sets up a event listener for button "A" and "B" and listens out for when the user clicks on the button to trigger the corresponding event handler
-        
-        uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-        uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+
+        if(button_pressed == true)
+        {
+            uBit.messageBus.ignore(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+            uBit.messageBus.ignore(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+        } else 
+        {
+            uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+            uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+        }
+
+
 
         //Uses the direction integer to keep the snake constally moving
         if(direction == 0)
@@ -199,6 +229,7 @@ int main()
         // now that the position of its head is known.
         move_snake(snake_head);
 
+        button_pressed = false;
     }
 
 
