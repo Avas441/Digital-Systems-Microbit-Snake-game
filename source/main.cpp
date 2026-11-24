@@ -89,42 +89,45 @@ void display_snake()
 
 void onButtonA(MicroBitEvent e) //Custom event handler that is trigered when the player presses the button "A" and is used to move the snake left relative to its current direction
 {
-    button_pressed = true;
-
-    if(direction == 0)
+    if(button_pressed == false)
     {
-        direction = 3;
-    } else if (direction == 3)
-    {
-        direction = 2;
-    } else if (direction == 2)
-    {
-        direction = 1;
-    } else if (direction == 1)
-    {
-        direction = 0;
-    }
-
+        button_pressed = true;
+        if(direction == 0)
+        {
+            direction = 3;
+        } else if (direction == 1)
+        {
+            direction = 2;
+        } else if (direction == 2)
+        {
+            direction = 1;
+        } else if (direction == 3)
+        {
+            direction = 0;
+        }
+    } 
 
 }
 
 void onButtonB(MicroBitEvent e) //Custom event handler that is trigered when the player presses the button "B" and is used to move the snake left relative to its current direction
 {
-    button_pressed = true;
-
-    if(direction == 0)
+    if(button_pressed == false)
     {
-        direction = 1;
-    } else if (direction == 1)
-    {
-        direction = 2;
-    } else if (direction == 2)
-    {
-        direction = 3;
-    } else if (direction == 3)
-    {
-        direction = 0;
-    }
+        button_pressed = true;
+        if(direction == 0)
+        {
+            direction = 1;
+        } else if (direction == 1)
+        {
+            direction = 2;
+        } else if (direction == 2)
+        {
+            direction = 3;
+        } else if (direction == 3)
+        {
+            direction = 0;
+        }
+    } 
 
 
 }
@@ -153,10 +156,30 @@ int main()
         {
             //Uses the microbit function "microbit_random" to set a random x and y value between 0 and 5 for the apple
 
+            int pos[length];
 
+            int i = 0;
 
-            apple.x = microbit_random(4); 
-            apple.y = microbit_random(4);
+            while(i <= length)             
+            {                  
+                pos[i] = snake[i].x + (5 * snake[i].y);     
+                i++;         
+            }
+
+            i = 0;
+            int rnd = microbit_random(25);      
+
+            while(i <= length)             
+            {                 
+                if(rnd == pos[i])
+                {             
+                    rnd = microbit_random(25);                           
+                }
+                i++;
+            }      
+            
+            apple.x = rnd % 5;             
+            apple.y = rnd / 5; 
 
             uBit.display.image.setPixelValue(apple.x, apple.y, 255); //Uses the apples x and y cordinates and prints a pixel there on the display
             appleActive = 1; // Updates flag so only one apple spawns
@@ -170,7 +193,6 @@ int main()
             length++; //Increments the length of the snake by 1
             appleActive = 0; //Resets the flag so once the while loop is done a new apple is spawned
             
-            uBit.display.scroll(score); //DEBUG used to show the score after eating an apple
 
             while(sleep_period >= sleep_max)
             {
@@ -179,6 +201,7 @@ int main()
             if(length == 4)
             {
                 uBit.display.scroll("You Win!"); //Displays a message to the user
+                uBit.display.scroll(score);
                 gameLoop = 0; //Stops the game loop
 
             }
@@ -190,21 +213,14 @@ int main()
             uBit.display.scroll("Game Over :(");
             gameLoop = 0;
         }
-        display_snake();// Print the snake
+        display_snake();// Print the snakeac
         
         uBit.sleep(sleep_period);// Wait for starting sleep_period value of 400 ms
 
         //Sets up a event listener for button "A" and "B" and listens out for when the user clicks on the button to trigger the corresponding event handler
 
-        if(button_pressed == true)
-        {
-            uBit.messageBus.ignore(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-            uBit.messageBus.ignore(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
-        } else 
-        {
-            uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-            uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
-        }
+        uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+        uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
 
 
