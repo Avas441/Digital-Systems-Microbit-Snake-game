@@ -167,13 +167,19 @@ int main()
             }
 
             i = 0;
+
+            int x = 0;
             int rnd = microbit_random(25);      
 
             while(i <= length)             
-            {                 
+            {
                 if(rnd == pos[i])
-                {             
-                    rnd = microbit_random(25);                           
+                {
+                    rnd = microbit_random(25);
+                    i = 0;                          
+                } else
+                {
+                    i++;
                 }
                 i++;
             }      
